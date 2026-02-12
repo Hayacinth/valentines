@@ -52,23 +52,41 @@ function App() {
     if (answer !== null || !containerRef.current) return
 
     const container = containerRef.current.getBoundingClientRect()
-    const buttonWidth = 140
-    const buttonHeight = 60
+    const card = document.querySelector('.question-card')?.getBoundingClientRect() || { top: 0, left: 0, width: 0, height: 0 }
 
-    // Use the full screen area for button positioning
-    const maxX = Math.max(container.width - buttonWidth - 40, 100)
-    const maxY = Math.max(container.height - buttonHeight - 40, 100)
+    // Adjusted button dimensions with scale taken into account
+    const scale = Math.max(noButtonSize - 0.06, 0.5)
+    const buttonWidth = 140 * scale
+    const buttonHeight = 60 * scale
 
-    // Random position across the entire screen
-    const randomX = Math.random() * maxX + 20
-    const randomY = Math.random() * maxY + 20
+    const maxX = container.width - buttonWidth - 40
+    const maxY = container.height - buttonHeight - 40
+
+    let randomX, randomY
+    let attempts = 0
+    let isOverlapping = true
+
+    // Try to find a position that doesn't overlap with the question card
+    while (isOverlapping && attempts < 20) {
+      randomX = Math.random() * maxX + 20
+      randomY = Math.random() * maxY + 20
+
+      // Check for overlap with the question card area (with a buffer)
+      const buffer = 50
+      const overlapX = randomX + buttonWidth > card.left - buffer && randomX < card.right + buffer
+      const overlapY = randomY + buttonHeight > card.top - buffer && randomY < card.bottom + buffer
+
+      if (!(overlapX && overlapY)) {
+        isOverlapping = false
+      }
+      attempts++
+    }
 
     setNoButtonPosition({ x: randomX, y: randomY })
     setIsPositioned(true)
 
     // Very gradual size changes - minimum 5 attempts before getting too small
-    // Size will be: 1.0 -> 0.94 -> 0.88 -> 0.82 -> 0.76 -> 0.70 -> 0.64...
-    setNoButtonSize(prev => Math.max(prev - 0.06, 0.5))
+    setNoButtonSize(scale)
     setYesButtonSize(prev => Math.min(prev + 0.12, 2.5))
     setNoClickCount(prev => prev + 1)
   }
